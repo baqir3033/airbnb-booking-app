@@ -159,6 +159,7 @@ export default function Home() {
                       excludeDateIntervals={bookedDates}
                       className="form-input" 
                       placeholderText="Add date" 
+                      portalId="root-portal"
                       required 
                     />
                   </div>
@@ -174,6 +175,7 @@ export default function Home() {
                       excludeDateIntervals={bookedDates}
                       className="form-input" 
                       placeholderText="Add date" 
+                      portalId="root-portal"
                       required 
                     />
                   </div>
