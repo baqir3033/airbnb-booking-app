@@ -30,6 +30,9 @@ export const initDb = async () => {
         status TEXT DEFAULT 'confirmed',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Ensure property_id column exists if table was created previously
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS property_id INTEGER REFERENCES properties(id) ON DELETE CASCADE;
     `);
   } finally {
     client.release();
