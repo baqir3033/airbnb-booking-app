@@ -174,7 +174,7 @@ p { color: var(--text-light); }
   flex-direction: column;
   border: 1px solid #b0b0b0;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .form-row {
@@ -268,3 +268,4 @@ p { color: var(--text-light); }
 /* React Datepicker Custom Overrides */
 .react-datepicker-wrapper { width: 100%; }
 .react-datepicker__input-container { width: 100%; }
+.react-datepicker-popper { z-index: 9999 !important; }
