@@ -4,12 +4,22 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req) {
   try {
-    await initDb();
-    const calendar = ical({ name: 'VillaLuxe Availability' });
+    const { searchParams } = new URL(req.url);
+    const propertyId = searchParams.get('propertyId');
 
-    const result = await pool.query(`SELECT * FROM bookings WHERE status = 'confirmed'`);
+    if (!propertyId) {
+      return new NextResponse('Missing propertyId', { status: 400 });
+    }
+
+    await initDb();
+    const calendar = ical({ name: 'Property Availability' });
+
+    const result = await pool.query(
+      `SELECT * FROM bookings WHERE property_id = $1 AND status = 'confirmed'`,
+      [propertyId]
+    );
 
     result.rows.forEach(booking => {
       calendar.createEvent({
@@ -24,7 +34,7 @@ export async function GET() {
     return new NextResponse(calendar.toString(), {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="calendar.ics"',
+        'Content-Disposition': `attachment; filename="property-${propertyId}.ics"`,
       },
     });
   } catch (error) {

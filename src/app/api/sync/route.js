@@ -6,16 +6,18 @@ import { NextResponse } from 'next/server';
 export async function POST(req) {
   try {
     await initDb();
-    const { url } = await req.json();
-    if (!url) return NextResponse.json({ error: 'Missing iCal URL' }, { status: 400 });
+    const { url, propertyId } = await req.json();
+    if (!url || !propertyId) {
+      return NextResponse.json({ error: 'Missing iCal URL or propertyId' }, { status: 400 });
+    }
 
     const events = await icalParser.async.fromURL(url);
     
     let imported = 0;
     
     const insertQuery = `
-      INSERT INTO bookings (uid, guest_name, email, start_date, end_date, status)
-      VALUES ($1, $2, $3, $4, $5, 'confirmed')
+      INSERT INTO bookings (uid, property_id, guest_name, email, start_date, end_date, status)
+      VALUES ($1, $2, $3, $4, $5, $6, 'confirmed')
       ON CONFLICT (uid) DO NOTHING
     `;
 
@@ -36,7 +38,7 @@ export async function POST(req) {
     }
 
     for (const ev of parsedEvents) {
-      const result = await pool.query(insertQuery, [ev.uid, ev.guestName, ev.email, ev.startDate, ev.endDate]);
+      const result = await pool.query(insertQuery, [ev.uid, propertyId, ev.guestName, ev.email, ev.startDate, ev.endDate]);
       if (result.rowCount > 0) imported++;
     }
 
