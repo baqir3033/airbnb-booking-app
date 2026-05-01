@@ -31,22 +31,6 @@ export const initDb = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
-    // SEEDING: Create a default property if none exist
-    const checkProps = await client.query('SELECT id FROM properties LIMIT 1');
-    if (checkProps.rows.length === 0) {
-      console.log('Seeding default property...');
-      await client.query(`
-        INSERT INTO properties (title, city, price, image_url, airbnb_ical_url)
-        VALUES (
-          'Luxury Arabian Villa', 
-          'Dubai', 
-          450, 
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop',
-          'https://backend.bnb-pilot.com/api/export/public/prop_96a786be/all.ics?token=fbb799bd606125e828f9cd100872da8fdcb8462879b84c4f09bfb92326ec49a3'
-        )
-      `);
-    }
   } finally {
     client.release();
   }
