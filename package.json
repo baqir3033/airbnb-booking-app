@@ -9,11 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "better-sqlite3": "^12.9.0",
     "date-fns": "^4.1.0",
     "ical-generator": "^10.2.0",
     "next": "16.2.4",
     "node-ical": "^0.26.0",
+    "pg": "^8.20.0",
     "react": "19.2.4",
     "react-datepicker": "^9.1.0",
     "react-dom": "19.2.4"

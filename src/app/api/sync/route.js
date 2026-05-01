@@ -1,10 +1,11 @@
-import db from '@/lib/db';
+import pool, { initDb } from '@/lib/db';
 import icalParser from 'node-ical';
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
+    await initDb();
     const { url } = await req.json();
     if (!url) return NextResponse.json({ error: 'Missing iCal URL' }, { status: 400 });
 
@@ -12,17 +13,11 @@ export async function POST(req) {
     
     let imported = 0;
     
-    const insertEvent = db.prepare(`
-      INSERT OR IGNORE INTO bookings (uid, guest_name, email, start_date, end_date, status)
-      VALUES (@uid, @guestName, @email, @startDate, @endDate, 'confirmed')
-    `);
-
-    const insertMany = db.transaction((eventsArr) => {
-      for (const ev of eventsArr) {
-        const result = insertEvent.run(ev);
-        if (result.changes > 0) imported++;
-      }
-    });
+    const insertQuery = `
+      INSERT INTO bookings (uid, guest_name, email, start_date, end_date, status)
+      VALUES ($1, $2, $3, $4, $5, 'confirmed')
+      ON CONFLICT (uid) DO NOTHING
+    `;
 
     const parsedEvents = [];
     for (const k in events) {
@@ -40,7 +35,10 @@ export async function POST(req) {
       }
     }
 
-    insertMany(parsedEvents);
+    for (const ev of parsedEvents) {
+      const result = await pool.query(insertQuery, [ev.uid, ev.guestName, ev.email, ev.startDate, ev.endDate]);
+      if (result.rowCount > 0) imported++;
+    }
 
     return NextResponse.json({ success: true, imported }, { status: 200 });
   } catch (error) {

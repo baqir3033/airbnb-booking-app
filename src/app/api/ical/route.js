@@ -1,4 +1,4 @@
-import db from '@/lib/db';
+import pool, { initDb } from '@/lib/db';
 import ical from 'ical-generator';
 import { NextResponse } from 'next/server';
 
@@ -6,11 +6,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    await initDb();
     const calendar = ical({ name: 'VillaLuxe Availability' });
 
-    const bookings = db.prepare(`SELECT * FROM bookings WHERE status = 'confirmed'`).all();
+    const result = await pool.query(`SELECT * FROM bookings WHERE status = 'confirmed'`);
 
-    bookings.forEach(booking => {
+    result.rows.forEach(booking => {
       calendar.createEvent({
         start: new Date(booking.start_date),
         end: new Date(booking.end_date),

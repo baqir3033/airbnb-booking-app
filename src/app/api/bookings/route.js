@@ -1,35 +1,35 @@
-import db from '@/lib/db';
+import pool, { initDb } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export async function POST(req) {
   try {
+    await initDb();
     const { guestName, email, startDate, endDate } = await req.json();
 
     if (!guestName || !email || !startDate || !endDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check for double booking
-    const conflictQuery = db.prepare(`
+    const conflictQuery = `
       SELECT id FROM bookings
       WHERE status = 'confirmed'
-      AND (start_date < @endDate AND end_date > @startDate)
-    `);
+      AND (start_date < $1 AND end_date > $2)
+    `;
 
-    const conflict = conflictQuery.get({ startDate, endDate });
+    const conflictResult = await pool.query(conflictQuery, [endDate, startDate]);
 
-    if (conflict) {
+    if (conflictResult.rows.length > 0) {
       return NextResponse.json({ error: 'These dates are already booked.' }, { status: 409 });
     }
 
     const uid = crypto.randomUUID();
-    const insertQuery = db.prepare(`
+    const insertQuery = `
       INSERT INTO bookings (uid, guest_name, email, start_date, end_date)
-      VALUES (@uid, @guestName, @email, @startDate, @endDate)
-    `);
+      VALUES ($1, $2, $3, $4, $5)
+    `;
 
-    insertQuery.run({ uid, guestName, email, startDate, endDate });
+    await pool.query(insertQuery, [uid, guestName, email, startDate, endDate]);
 
     return NextResponse.json({ success: true, uid }, { status: 201 });
   } catch (error) {
